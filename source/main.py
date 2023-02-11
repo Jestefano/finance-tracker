@@ -22,7 +22,7 @@ TELEGRAM_IDS = os.getenv('TELEGRAM_IDS')
 # Telegram
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# S3
+# boto3
 s3 = boto3.resource('s3')
 client = boto3.client('athena')
 
@@ -47,29 +47,21 @@ def send_welcome(message):
 @bot.message_handler(commands=['add']) 
 def add_registries_today(message):
     text = "Add your registry with (ammount,category,card,detail,relation)"
-    # Show the last 3: PENDING
     sent_msg = bot.send_message(message.chat.id, text)
-    bot.register_next_step_handler(sent_msg, add_registries_today_func)
-
-def add_registries_today_func(message):
-    key = file_names(s3,BUCKET_NAME)
-    data = generate_json(message.text)
-    preprocessing_info(data)
-    save_info(s3,bot,BUCKET_NAME,key,data,message.chat.id)
+    bot.register_next_step_handler(sent_msg, add_registries_func)
 
 @restricted
 @bot.message_handler(commands=['addpast'])
 def add_registries_other_day(message):
     text = "Add your registry with (YYYY-mm-dd,ammount,category,card,detail,relation)"
-    # Show the last 3: PENDING
     sent_msg = bot.send_message(message.chat.id, text)
-    bot.register_next_step_handler(sent_msg, add_registries_other_day_func)
-
-def add_registries_other_day_func(message):
+    bot.register_next_step_handler(sent_msg, add_registries_func)
+    
+def add_registries_func(message):
     key = file_names(s3,BUCKET_NAME,message.text)
     data = generate_json(message.text)
     preprocessing_info(data)
-    save_info(s3,bot,BUCKET_NAME,key,data,message.chat.id)
+    save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, message.chat.id)
 
 @restricted
 @bot.message_handler(commands=['see'])
