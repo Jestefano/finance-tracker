@@ -11,7 +11,6 @@ It has two main purposes:
 
 # To-do
 - Basic functionality
-    - Limpiar S3 query: Tanto al crear partitions como al hacer shows
     - Beautify el show
     - Validar restriccion de IDs
     - Anadir algo como show para ver todas categorias + tarjetas
@@ -26,11 +25,14 @@ It has two main purposes:
 
 # Done
 - If I add a new date, it automatically asks if there is a partition. If there isn't, it creates one for it.
+- Clean S3 after any athena query
 
 # Resources
-- Telegram documentation
-- https://www.freecodecamp.org/news/how-to-create-a-telegram-bot-using-python/
-- https://stackoverflow.com/questions/46015319/how-to-make-a-private-telegram-bot-accessible-only-by-its-owner
+- Telegram
+    - Telegram documentation
+    - https://www.freecodecamp.org/news/how-to-create-a-telegram-bot-using-python/
+    - https://stackoverflow.com/questions/46015319/how-to-make-a-private-telegram-bot-accessible-only-by-its-owner
+
 - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html
 
 - Athena in boto3
@@ -38,6 +40,7 @@ It has two main purposes:
     - https://stackoverflow.com/questions/52026405/how-to-create-dataframe-from-aws-athena-using-boto3-get-query-results-method
     - https://medium.com/swlh/add-newly-created-partitions-programmatically-into-aws-athena-schema-d773722a228e
     - https://stackoverflow.com/questions/67424720/boto3-python-check-if-directory-exists-in-s3
+    - https://stackoverflow.com/questions/59026551/s3-delete-files-inside-a-folder-using-boto3
 
 - Id restriction
     - https://stackoverflow.com/questions/35368557/how-to-limit-access-to-a-telegram-bot

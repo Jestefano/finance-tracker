@@ -24,6 +24,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # boto3
 s3 = boto3.resource('s3')
+s3_client = boto3.client('s3')
 client = boto3.client('athena')
 
 def restricted(func):
@@ -66,7 +67,7 @@ def add_registries_func(message):
 @restricted
 @bot.message_handler(commands=['see'])
 def see_last_x_registries(message):
-    results = extract_today_info(client, BUCKET_NAME, DB_NAME, TABLE_NAME)
+    results = extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME)
     df = response_to_df(results)
     # Falta beautify 
     bot.reply_to(message,str(df))

@@ -14,6 +14,32 @@ def athena_query(client, DB_NAME, query, output):
     )
     return response
 
+def cleanup(s3_client, BUCKET_NAME, folder):
+    folder = '/'.join(folder.split('/')[3:])
+    response = s3_client.list_objects_v2(Bucket=BUCKET_NAME, Prefix=folder)
+
+    print("Eliminando..." )
+    for object in response['Contents']:
+        s3_client.delete_object(Bucket=BUCKET_NAME, Key=object['Key'])
+    print("Eliminacion Terminada")
+    
+def execute_query(s3_client, client, query_start, BUCKET_NAME, output):
+    try:              
+        query_status = None
+        while 1:
+            query_status = client.get_query_execution(QueryExecutionId=query_start["QueryExecutionId"])['QueryExecution']['Status']['State']
+            if query_status == 'FAILED' or query_status == 'CANCELLED':
+                raise Exception('Athena query failed or was cancelled')
+            elif(query_status == 'QUEUED' or query_status == 'RUNNING'):
+                time.sleep(2)
+            else: 
+                result = client.get_query_results(QueryExecutionId=query_start['QueryExecutionId'])
+                break
+        cleanup(s3_client, BUCKET_NAME, output)
+        return result
+    except Exception as e:
+        print(e)  
+
 def preprocessing_info(data):
     if('.' in data['ammount_cents']):
         if(len(data['ammount_cents'].split('.')[1]) == 1): 
@@ -68,14 +94,15 @@ def _is_valid_s3_path(s3, BUCKET_NAME, path):
     bucket = s3.Bucket(BUCKET_NAME)
     return sum(1 for _ in bucket.objects.filter(Prefix=path)) > 0
 
-def create_partition(client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route):
+def create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route):
     date_params = key_route.split('/')[-4:-1]
     year, month, day = [int(params.split('=')[-1]) for params in date_params]
     query = f"ALTER TABLE {TABLE_NAME} ADD IF NOT EXISTS \
     PARTITION (YEAR={year},MONTH={month},DAY={day}) LOCATION 's3://{BUCKET_NAME}/{key_route}'"
     output =  f"s3://{BUCKET_NAME}/temp/"
-    print(query)
-    athena_query(client, DB_NAME, query, output)
+    print("Creating partition")
+    query_start = athena_query(client, DB_NAME, query, output)
+    execute_query(s3, client, query_start, BUCKET_NAME, output)
 
 def save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, recipient):
     key_route = '/'.join(key.split('/')[:-1]) + '/'
@@ -83,44 +110,26 @@ def save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, reci
     s3object = s3.Object(bucket_name=BUCKET_NAME,key=key)
     s3object.put(Body=(bytes(json.dumps(data).encode('UTF-8'))))
     if route_exists == False:
-        print(key_route)
-        create_partition(client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route)
+        create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route)
         bot.send_message(recipient, "Partition created correctly")
 
     bot.send_message(recipient, "Data inserted correctly")
 
-def extract_today_info(client, BUCKET_NAME, DB_NAME, TABLE_NAME):
+def extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME):
     today = datetime.datetime.today()
     year = today.strftime('%Y')
     month = today.strftime('%m')
     day = today.strftime('%d')
     
     query = f"""
-        SELECT *
-        FROM {TABLE_NAME}
-        WHERE YEAR = {year}
-        AND MONTH = {month}
-        AND DAY = {day}
+        SELECT * FROM {TABLE_NAME}
+        WHERE YEAR = {year} AND MONTH = {month} AND DAY = {day}
         """
         
-    output = f"s3://{BUCKET_NAME}/temporal_query"
-    query_start = athena_query(client,DB_NAME,BUCKET_NAME,query,output)
+    output = f"s3://{BUCKET_NAME}/temp/"
+    query_start = athena_query(client,DB_NAME,query,output)
 
-    # Way to handle queries in athena
-    try:              
-        query_status = None
-        while 1:
-            query_status = client.get_query_execution(QueryExecutionId=query_start["QueryExecutionId"])['QueryExecution']['Status']['State']
-            if query_status == 'FAILED' or query_status == 'CANCELLED':
-                raise Exception('Athena query failed or was cancelled')
-            elif(query_status == 'QUEUED' or query_status == 'RUNNING'):
-                time.sleep(2)
-            else: 
-                result = client.get_query_results(QueryExecutionId=query_start['QueryExecutionId'])
-                break
-        return result
-    except Exception as e:
-        print(e)     
+    return execute_query(s3_client, client, query_start, BUCKET_NAME, output)
 
 def response_to_df(results):
     df = [[data.get('VarCharValue') for data in row['Data']] for row in results['ResultSet']['Rows']]
