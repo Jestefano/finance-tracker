@@ -1,8 +1,9 @@
 import json
 import time
-import datetime
+from datetime import datetime,timedelta
 import uuid
 import botocore
+from dateutil.parser import isoparse
 
 def message_check_in(event):
     
@@ -66,7 +67,7 @@ def preprocessing_info(data):
 
 def file_names(s3, BUCKET_NAME, s):
     if len(s.split(',')) == 5:
-        today = datetime.datetime.today()
+        today = datetime.today()
         year = today.strftime('%Y')
         month = today.strftime('%m').zfill(2)
         day = today.strftime('%d').zfill(2)
@@ -124,7 +125,7 @@ def save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, reci
     bot.send_message(recipient, "Data inserted correctly")
 
 def extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME):
-    today = datetime.datetime.today()
+    today = datetime.today()
     year = today.strftime('%Y')
     month = today.strftime('%m')
     day = today.strftime('%d')
@@ -146,3 +147,37 @@ def response_to_df(results):
     # df['ammount'] = df.ammount_cents.astype(float) / 100
     # df = df[['ammount','category','card','detail','relation']]
     # return df
+
+def read_json_s3(s3, BUCKET_NAME, file):
+    content_object = s3.Object(BUCKET_NAME, file)
+    file_content = content_object.get()['Body'].read().decode('utf-8')
+    json_content = json.loads(file_content)
+    return json_content
+    
+def save_json_s3(json_content, s3, BUCKET_NAME, file):
+    content_object = s3.Object(BUCKET_NAME, file)
+    content_object.put(Body=(bytes(json.dumps(json_content).encode('UTF-8'))))
+
+def change_state(s3, BUCKET_NAME, state):
+    json_content = read_json_s3(s3, BUCKET_NAME, 'conf/state.json')
+    
+    # Modify
+    json_content['state'] = state
+    json_content['time'] = datetime.now().isoformat()
+    
+    save_json_s3(json_content, s3, BUCKET_NAME, 'conf/state.json')
+    
+def validate_previous_add(s3, BUCKET_NAME, state):
+    json_content = read_json_s3(s3, BUCKET_NAME, 'conf/state.json')
+    return json_content['state'] == 'Add'
+    
+def validate_state_time(s3, BUCKET_NAME):
+    json_content = read_json_s3(s3, BUCKET_NAME, 'conf/state.json')    
+    json_content['time'] = isoparse(json_content['time'])
+    config = read_json_s3(s3, BUCKET_NAME,'conf/config.json')
+    
+    if json_content['time'] + timedelta(minutes=config['minutes']) >= datetime.now():
+        json_content['state'] = 'None'
+        json_content['time'] = datetime.now().isoformat()
+        
+    save_json_s3(json_content, s3, BUCKET_NAME, 'conf/state.json')

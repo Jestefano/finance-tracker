@@ -10,6 +10,8 @@ It has two main purposes:
 - Being able to detect "lifestyle inflation"
 
 # To-do
+- Athena IAM
+
 - Basic functionality
     - Deploy Lambda
     - Validar restriccion de IDs
@@ -64,3 +66,4 @@ It has two main purposes:
 
 - Locally develop Lambda
     - https://www.youtube.com/watch?v=3BH79Uciw5w&t=238s
+    - https://medium.com/claranet-italia/a-practical-guide-surviving-aws-sam-part-3-lambda-layers-8a55eb5d2cbe

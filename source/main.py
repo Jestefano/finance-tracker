@@ -5,7 +5,7 @@ import telebot
 import boto3
 
 from source.auxiliar import preprocessing_info, file_names, generate_json, save_info,extract_today_info,\
-    response_to_df, message_check_in, validate_previous_add
+    response_to_df, message_check_in, validate_previous_add, change_state, validate_state_time
 from source.responses import instructions_error, instructions_start
 
 load_dotenv()
@@ -32,10 +32,10 @@ def add_registries_message(text, message):
     if text == '/add':
         bot.send_message(message['chat']['id'], "Add your registry with (ammount,category,card,detail,relation)")
     if text == '/addother':
-        bot.send_message(message['chat']['id'], "Add your registry with (YYYY-mm-dd,ammount,category,card,detail,relation)"
+        bot.send_message(message['chat']['id'], "Add your registry with (YYYY-mm-dd,ammount,category,card,detail,relation)")
     
 def add_registries_func(message):
-    key = file_names(s3,BUCKET_NAME,message['text'])
+    key = file_names(s3, BUCKET_NAME, message['text'])
     data = generate_json(message['text'])
     preprocessing_info(data)
     save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, message['chat']['id'])
@@ -55,12 +55,21 @@ def echo_all(message):
 def lambda_handler(event, context):
     message, text = message_check_in(event)
     
-    if validate_previous_add():
-        add_registries_func(message)
     if text == '/start' or text == '/hello':
+        change_state(s3, BUCKET_NAME, 'None')
         send_welcome_message(message)
-    elif text  == '/add' or text == '/addother':
-        add_registries_message(text,message)    
     elif text == '/see':
+        change_state(s3, BUCKET_NAME, 'None')
         see_last_x_registries(message)
+    elif text  == '/add' or text == '/addother':
+        change_state(s3, BUCKET_NAME, 'Add')
+        add_registries_message(text,message)    
+    elif validate_previous_add():
+        change_state(s3, BUCKET_NAME, 'Add')
+        add_registries_func(message)
+    else:
+        echo_all(message)
+    
+    validate_state_time(s3, BUCKET_NAME)
+        
     return {'status':200}
