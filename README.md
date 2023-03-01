@@ -11,15 +11,16 @@ It has two main purposes:
 
 # To-do
 - Basic functionality
-    - Beautify el show
+    - Deploy Lambda
     - Validar restriccion de IDs
+    - Como mantener una "sesion" de maximo 3 minutos (para no hacer multiples calls, salvo que esto sea rapido)
+    - Beautify el show
     - Anadir algo como show para ver todas categorias + tarjetas
     - Remaining of the month for extras
     - Clean up code
 - Dashboard:
     - Streamlit
-- Host function
-    - AWS Lambda Basic functionality
+- Host 
     - AWS Lambda Dashboard
 - Keep github updated
 
@@ -53,3 +54,13 @@ It has two main purposes:
 
 - Streamlit in AWS
     - https://aws.amazon.com/es/blogs/opensource/using-streamlit-to-build-an-interactive-dashboard-for-data-analysis-on-aws/
+
+- Requirements
+    - https://stackoverflow.com/questions/31684375/automatically-create-requirements-txt
+
+- Deploy Lambda
+    - https://aws.plainenglish.io/develop-your-telegram-chatbot-with-aws-api-gateway-dynamodb-lambda-functions-410dcb1fb58a
+    - https://www.youtube.com/watch?v=oYMgw4M4cD0
+
+- Locally develop Lambda
+    - https://www.youtube.com/watch?v=3BH79Uciw5w&t=238s

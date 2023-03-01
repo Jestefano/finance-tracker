@@ -1,10 +1,18 @@
 import json
+import time
 import datetime
 import uuid
 import botocore
-import time
 
-import pandas as pd
+def message_check_in(event):
+    
+    # Extract the message key over payload's body
+    message = json.loads(event['body'])['message']
+    
+    # Split between three variables bellow
+    text = message['text'] # The message content
+    
+    return message, text
 
 def athena_query(client, DB_NAME, query, output):
     response = client.start_query_execution(
@@ -133,7 +141,8 @@ def extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME):
 
 def response_to_df(results):
     df = [[data.get('VarCharValue') for data in row['Data']] for row in results['ResultSet']['Rows']]
-    df = pd.DataFrame(df[1:], columns=df[0])
-    df['ammount'] = df.ammount_cents.astype(float) / 100
-    df = df[['ammount','category','card','detail','relation']]
     return df
+    # df = pd.DataFrame(df[1:], columns=df[0])
+    # df['ammount'] = df.ammount_cents.astype(float) / 100
+    # df = df[['ammount','category','card','detail','relation']]
+    # return df

@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: lamda local demo
+
+Globals:
+  Function:
+    Timeout: 20
+
+Resources:
+  finance-tracker:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: source/
+      Handler: main.lambda_handler
+      Runtime: python3.9
+      Layers:
+        - !Ref RequirementsLayer
+  RequirementsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: Requirements-finance-fracker
+      Description: Layer that contains one version of libraries needed for the proyect
+      LicenseInfo: 'Available under the MIT license.'
+      ContentUri: requirements-layer/
+      CompatibleRuntimes:
+        - python3.9

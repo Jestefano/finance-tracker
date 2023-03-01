@@ -1,3 +1,6 @@
 source/.env
 Learnings
 source/test.ipynb
+requirements-layer
+.aws-sam
+test.ipynb

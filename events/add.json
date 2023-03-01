@@ -1,0 +1,36 @@
+{
+    "version":"2.0",
+    "routeKey":"POST /finance-tracker",
+    "rawPath":"/finance-tracker",
+    "rawQueryString":"",
+    "headers":{
+       "accept-encoding":"gzip, deflate",
+       "content-length":"227",
+       "content-type":"application/json",
+       "host":"f9t0pwhbx8.execute-api.us-east-1.amazonaws.com",
+       "x-amzn-trace-id":"Root=1-63fa2742-530dfd02628a11564d248516",
+       "x-forwarded-for":"91.108.6.150",
+       "x-forwarded-port":"443",
+       "x-forwarded-proto":"https"
+    },
+    "requestContext":{
+       "accountId":"697346554351",
+       "apiId":"f9t0pwhbx8",
+       "domainName":"f9t0pwhbx8.execute-api.us-east-1.amazonaws.com",
+       "domainPrefix":"f9t0pwhbx8",
+       "http":{
+          "method":"POST",
+          "path":"/finance-tracker",
+          "protocol":"HTTP/1.1",
+          "sourceIp":"91.108.6.150",
+          "userAgent":""
+       },
+       "requestId":"A5sSXhPaoAMEJnw=",
+       "routeKey":"POST /finance-tracker",
+       "stage":"$default",
+       "time":"25/Feb/2023:15:20:34 +0000",
+       "timeEpoch":1677338434060
+    },
+    "body":"{\"update_id\":479608887,\n\"message\":{\"message_id\":248,\"from\":{\"id\":1464290099,\"is_bot\":false,\"first_name\":\"Jesus\",\"language_code\":\"en\"},\"chat\":{\"id\":1464290099,\"first_name\":\"Jesus\",\"type\":\"private\"},\"date\":1677338433,\"text\":\"/add 15,Alimento,BBVA,Compra de prueba,None\"}}",
+    "isBase64Encoded":false
+ }
