@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import uuid
 import botocore
 from dateutil.parser import isoparse
@@ -40,14 +40,14 @@ def execute_query(s3_client, client, query_start, BUCKET_NAME, output):
             if query_status == 'FAILED' or query_status == 'CANCELLED':
                 raise Exception('Athena query failed or was cancelled')
             elif(query_status == 'QUEUED' or query_status == 'RUNNING'):
-                time.sleep(2)
+                time.sleep(0.2)
             else: 
                 result = client.get_query_results(QueryExecutionId=query_start['QueryExecutionId'])
                 break
         cleanup(s3_client, BUCKET_NAME, output)
         return result
     except Exception as e:
-        print(e)  
+        print(e)
 
 def preprocessing_info(data):
     if('.' in data['ammount_cents']):
@@ -65,7 +65,7 @@ def preprocessing_info(data):
 
     return data
 
-def file_names(s3, BUCKET_NAME, s):
+def file_names(s):
     if len(s.split(',')) == 5:
         today = datetime.today()
         year = today.strftime('%Y')
@@ -79,14 +79,8 @@ def file_names(s3, BUCKET_NAME, s):
     else:
         raise Exception
 
-    while True:
-        id_ = uuid.uuid1()
-        key = f'data/YEAR={year}/MONTH={month}/DAY={day}/{id_.hex}.json'
-        try:
-            s3.Object(BUCKET_NAME, key).load()
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
-                break
+    id_ = uuid.uuid1()
+    key = f'data/YEAR={year}/MONTH={month}/DAY={day}/{id_.hex}.json'
 
     return key
 
@@ -109,7 +103,7 @@ def create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route):
     query = f"ALTER TABLE {TABLE_NAME} ADD IF NOT EXISTS \
     PARTITION (YEAR={year},MONTH={month},DAY={day}) LOCATION 's3://{BUCKET_NAME}/{key_route}'"
     output =  f"s3://{BUCKET_NAME}/temp/"
-    print("Creating partition")
+    print("## Creating partition")
     query_start = athena_query(client, DB_NAME, query, output)
     execute_query(s3, client, query_start, BUCKET_NAME, output)
 
@@ -118,10 +112,10 @@ def save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, reci
     route_exists = _is_valid_s3_path(s3, BUCKET_NAME, key_route)
     s3object = s3.Object(bucket_name=BUCKET_NAME,key=key)
     s3object.put(Body=(bytes(json.dumps(data).encode('UTF-8'))))
-    if route_exists == False:
-        create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route)
-        bot.send_message(recipient, "Partition created correctly")
-
+    print("## Object put")
+    create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route)
+    
+    print("## Data inserted")
     bot.send_message(recipient, "Data inserted correctly")
 
 def extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME):
@@ -167,7 +161,7 @@ def change_state(s3, BUCKET_NAME, state):
     
     save_json_s3(json_content, s3, BUCKET_NAME, 'conf/state.json')
     
-def validate_previous_add(s3, BUCKET_NAME, state):
+def validate_previous_add(s3, BUCKET_NAME):
     json_content = read_json_s3(s3, BUCKET_NAME, 'conf/state.json')
     return json_content['state'] == 'Add'
     
@@ -176,8 +170,9 @@ def validate_state_time(s3, BUCKET_NAME):
     json_content['time'] = isoparse(json_content['time'])
     config = read_json_s3(s3, BUCKET_NAME,'conf/config.json')
     
-    if json_content['time'] + timedelta(minutes=config['minutes']) >= datetime.now():
+    if datetime.now() >= json_content['time'] + timedelta(minutes=config['minutes']):
         json_content['state'] = 'None'
-        json_content['time'] = datetime.now().isoformat()
-        
+        json_content['time'] = datetime.now()
+    json_content['time'] = json_content['time'].isoformat()
+    
     save_json_s3(json_content, s3, BUCKET_NAME, 'conf/state.json')

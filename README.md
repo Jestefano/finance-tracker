@@ -10,7 +10,7 @@ It has two main purposes:
 - Being able to detect "lifestyle inflation"
 
 # To-do
-- Athena IAM
+- Rol de partitions (alter table) IAM
 
 - Basic functionality
     - Deploy Lambda

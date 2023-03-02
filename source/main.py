@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import telebot
 import boto3
+from datetime import datetime
 
 from source.auxiliar import preprocessing_info, file_names, generate_json, save_info,extract_today_info,\
     response_to_df, message_check_in, validate_previous_add, change_state, validate_state_time
@@ -35,41 +36,52 @@ def add_registries_message(text, message):
         bot.send_message(message['chat']['id'], "Add your registry with (YYYY-mm-dd,ammount,category,card,detail,relation)")
     
 def add_registries_func(message):
-    key = file_names(s3, BUCKET_NAME, message['text'])
+    print("## Adding registry")
+    key = file_names(message['text'])
     data = generate_json(message['text'])
+    print("## Processing info")
     preprocessing_info(data)
+    print("## Saving info")
     save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, message['chat']['id'])
-
+    print("## Ended")
+    
 def see_last_x_registries(message):
     results = extract_today_info(s3_client, client, BUCKET_NAME, DB_NAME, TABLE_NAME)
     df = response_to_df(results)
     # Falta beautify 
-    bot.reply_to(message,str(df))
+    bot.send_message(message['chat']['id'],str(df))
 
 def remaining_month(message):
     pass
 
 def echo_all(message):
-    bot.reply_to(message, instructions_error)
+    bot.send_message(message['chat']['id'], instructions_error)
 
 def lambda_handler(event, context):
     message, text = message_check_in(event)
     
+    print("## Test")
+    print(text)
+    print(datetime.now())
     if text == '/start' or text == '/hello':
+        print("## Start or hello")
         change_state(s3, BUCKET_NAME, 'None')
         send_welcome_message(message)
     elif text == '/see':
+        print("## See")
         change_state(s3, BUCKET_NAME, 'None')
         see_last_x_registries(message)
     elif text  == '/add' or text == '/addother':
+        print("## Add")
         change_state(s3, BUCKET_NAME, 'Add')
         add_registries_message(text,message)    
-    elif validate_previous_add():
+    elif validate_previous_add(s3, BUCKET_NAME):
+        print("## Validate add")
+        # Add one validate of correct information format
         change_state(s3, BUCKET_NAME, 'Add')
         add_registries_func(message)
     else:
-        echo_all(message)
-    
-    validate_state_time(s3, BUCKET_NAME)
+        print("## Default")
+        echo_all(message)  
         
     return {'status':200}
