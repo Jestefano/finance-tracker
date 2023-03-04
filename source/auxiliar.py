@@ -93,9 +93,15 @@ def generate_json(s):
         
     return data
 
-def _is_valid_s3_path(s3, BUCKET_NAME, path):
-    bucket = s3.Bucket(BUCKET_NAME)
-    return sum(1 for _ in bucket.objects.filter(Prefix=path)) > 0
+def validate_json(s3, BUCKET_NAME, data):
+    default = read_json_s3(s3, BUCKET_NAME, 'conf/default.json')
+    cards = default['Cards']
+    categories = default['Categories']
+    if data['card'] not in cards:
+        return False
+    if data['category'] not in categories:
+        return False
+    return True 
 
 def create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route):
     date_params = key_route.split('/')[-4:-1]
@@ -109,7 +115,6 @@ def create_partition(s3, client, DB_NAME, BUCKET_NAME, TABLE_NAME, key_route):
 
 def save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, recipient):
     key_route = '/'.join(key.split('/')[:-1]) + '/'
-    route_exists = _is_valid_s3_path(s3, BUCKET_NAME, key_route)
     s3object = s3.Object(bucket_name=BUCKET_NAME,key=key)
     s3object.put(Body=(bytes(json.dumps(data).encode('UTF-8'))))
     print("## Object put")

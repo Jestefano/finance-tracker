@@ -1,0 +1,35 @@
+{
+	"Categories":[
+		"Adicional",
+		"Mascota",
+		"Salud",
+		"Transporte",
+		"Ajuste",
+		"Amigos",
+		"Cashback",
+		"Comision",
+		"Deuda",
+		"Intereses",
+		"Alimento y casa",
+		"Educacion",
+		"Ingreso",
+		"Monto inicial",
+		"Movimiento",
+		"Mensualidades"
+	],
+	"Cards":[
+		"Agora",
+		"Banbif",
+		"BBVA",
+		"BBVA prepago",
+		"BCP",
+		"Efectivo",
+		"Interbank",
+		"Maximo",
+		"OH",
+		"Prex",
+		"Rappi",
+		"Ripley",
+		"Sodexo"
+	]
+}

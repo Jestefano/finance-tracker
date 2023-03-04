@@ -6,8 +6,8 @@ import boto3
 from datetime import datetime
 
 from source.auxiliar import preprocessing_info, file_names, generate_json, save_info,extract_today_info,\
-    response_to_df, message_check_in, validate_previous_add, change_state, validate_state_time
-from source.responses import instructions_error, instructions_start
+    response_to_df, message_check_in, validate_previous_add, change_state, validate_state_time, validate_json
+from source.responses import instructions_error, instructions_start, instructions_add, instructions_add_other
 
 load_dotenv()
 
@@ -31,9 +31,9 @@ def send_welcome_message(message):
 
 def add_registries_message(text, message):
     if text == '/add':
-        bot.send_message(message['chat']['id'], "Add your registry with (ammount,category,card,detail,relation)")
+        bot.send_message(message['chat']['id'], instructions_add)
     if text == '/addother':
-        bot.send_message(message['chat']['id'], "Add your registry with (YYYY-mm-dd,ammount,category,card,detail,relation)")
+        bot.send_message(message['chat']['id'], instructions_add_other)
     
 def add_registries_func(message):
     print("## Adding registry")
@@ -41,6 +41,11 @@ def add_registries_func(message):
     data = generate_json(message['text'])
     print("## Processing info")
     preprocessing_info(data)
+    
+    val = validate_json(s3, BUCKET_NAME, data)
+    if val == False:
+        bot.send_message(message['chat']['id'], "Error in category or card")
+        return 
     print("## Saving info")
     save_info(s3, client, bot, DB_NAME, BUCKET_NAME, TABLE_NAME, key, data, message['chat']['id'])
     print("## Ended")
